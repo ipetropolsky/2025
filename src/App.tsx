@@ -64,6 +64,7 @@ export default function App() {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [direction, setDirection] = useState(1);
   const [isInitialized, setIsInitialized] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -110,7 +111,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!viewMode && isInitialized) {
+    // Сохраняем только если не в режиме просмотра И есть параметр в URL
+    const params = new URLSearchParams(window.location.search);
+    const hasDataParam = params.has('data');
+    
+    if (!viewMode && isInitialized && !hasDataParam) {
       saveToLocalStorage();
     }
   }, [answers, customQuestions, viewMode, isInitialized]);
@@ -199,6 +204,12 @@ export default function App() {
     const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
     setShareUrl(url);
     setShowSharePopup(true);
+    
+    // Устанавливаем фокус на textarea после открытия попапа
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.select();
+    }, 100);
     
     // Попытка копировать с fallback
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -337,9 +348,13 @@ export default function App() {
                 onClick={e => e.stopPropagation()}
               >
                 <h3 className="pixel-question text-[#ffd700] mb-4">Ссылка скопирована! ✓</h3>
-                <div className="bg-[#0a0a1a] p-4 border-2 border-white break-all pixel-answer text-sm">
-                  {shareUrl}
-                </div>
+                <textarea
+                  ref={textareaRef}
+                  value={shareUrl}
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                  className="w-full h-24 bg-[#0a0a1a] text-white border-2 border-white p-3 pixel-answer text-sm resize-none outline-none focus:border-[#ffd700]"
+                />
                 <button
                   onClick={() => setShowSharePopup(false)}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-6 py-3 mt-6 border-2 border-white w-full"
