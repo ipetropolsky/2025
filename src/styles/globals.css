@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Press Start 2P', cursive;
+  margin: 0;
+  padding: 0;
+  background: #0a0a1a;
+  color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pixel-title {
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  line-height: 1.4;
+  text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+  image-rendering: pixelated;
+  letter-spacing: 2px;
+}
+
+.pixel-question {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  line-height: 1.6;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+.pixel-subtitle {
+  font-size: clamp(0.5rem, 2vw, 0.75rem);
+  line-height: 1.6;
+  letter-spacing: 1px;
+}
+
+.pixel-answer {
+  font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+}
+
+.pixel-counter {
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  letter-spacing: 2px;
+}
+
+.pixel-input {
+  font-family: 'Press Start 2P', cursive;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  line-height: 1.6;
+  image-rendering: pixelated;
+  transition: all 0.2s ease;
+}
+
+.pixel-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.pixel-button {
+  font-family: 'Press Start 2P', cursive;
+  font-size: clamp(0.625rem, 2vw, 0.875rem);
+  letter-spacing: 1px;
+  cursor: pointer;
+  image-rendering: pixelated;
+  text-transform: uppercase;
+}
+
+.pixel-border {
+  image-rendering: pixelated;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 640px) {
+  .pixel-title {
+    font-size: 1.25rem;
+  }
+  
+  .pixel-question {
+    font-size: 0.875rem;
+  }
+  
+  .pixel-answer {
+    font-size: 0.75rem;
+  }
+  
+  .pixel-input {
+    font-size: 0.875rem;
+    padding: 1rem !important;
+  }
+  
+  .pixel-button {
+    font-size: 0.5rem;
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* Pixel effect animations */
+@keyframes pixel-pop {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.pixel-button:active {
+  animation: pixel-pop 0.2s ease;
+}
