@@ -4,21 +4,29 @@ import { ChevronLeft, ChevronRight, Share2, Sparkles } from 'lucide-react';
 
 // Функции для правильной работы с Unicode в base64
 const encodeBase64 = (str: string): string => {
-  // Преобразуем строку в UTF-8 байты, затем в base64
-  const utf8Bytes = new TextEncoder().encode(str);
-  let binaryString = '';
-  utf8Bytes.forEach(byte => {
-    binaryString += String.fromCharCode(byte);
-  });
-  return btoa(binaryString);
+  const bytes: Uint8Array = new TextEncoder().encode(str);
+  const bin: string = String.fromCharCode(...bytes);
+  return btoa(bin)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
 };
 
 const decodeBase64 = (str: string): string => {
-  // Декодируем base64 в байты, затем в UTF-8 строку
-  const binaryString = atob(str);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  let base64: string = str
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+  // паддинг: длина должна делиться на 4
+  const pad = base64.length % 4;
+  if (pad) {
+    base64 += '='.repeat(4 - pad);
+  }
+
+  const bin: string = atob(base64);
+  const bytes: Uint8Array = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
   }
   return new TextDecoder().decode(bytes);
 };
@@ -36,9 +44,9 @@ interface Answers {
 }
 
 const QUESTIONS: Question[] = [
-  { id: 1, text: 'Еда года', type: 'single' },
-  { id: 2, text: 'Саундтрек года', type: 'multiple', maxAnswers: 3 },
-  { id: 3, text: 'ТОП фильмов/сериалов года', type: 'multiple', maxAnswers: 3 },
+  { id: 1, text: 'Саундтрек года', type: 'multiple', maxAnswers: 3 },
+  { id: 2, text: 'ТОП фильмов/сериалов года', type: 'multiple', maxAnswers: 3 },
+  { id: 3, text: 'Еда года', type: 'single' },
   { id: 4, text: 'Победа года', type: 'single' },
   { id: 5, text: 'Разочарование года', type: 'single' },
   { id: 6, text: 'Лучший момент года', type: 'single' },
@@ -64,20 +72,32 @@ export default function App() {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [direction, setDirection] = useState(1);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [viewModeQuestions, setViewModeQuestions] = useState<Question[]>(QUESTIONS);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const data = params.get('data');
-    
+
     if (data) {
       try {
+        // data уже декодирована URLSearchParams.get()
+        // decodeBase64 сама обработает URL-encoded символы если нужно
         const decoded = JSON.parse(decodeBase64(data));
         setAnswers(decoded.answers || {});
         setCustomQuestions(decoded.custom || []);
         setViewMode(true);
         setShowResults(true);
         setIsInitialized(true);
+        // В режиме просмотра используем вопросы из данных, если они есть
+        // Если вопросов нет (старые ссылки), используем QUESTIONS как fallback
+        if (decoded.questions) {
+          setViewModeQuestions(decoded.questions);
+        } else {
+          // Для старых ссылок используем QUESTIONS, но это не идеально
+          // соответствует требованию "никакой связи"
+          setViewModeQuestions(QUESTIONS);
+        }
       } catch (e) {
         console.error('Failed to decode data', e);
         setIsInitialized(true);
@@ -89,7 +109,14 @@ export default function App() {
           const decoded = JSON.parse(decodeBase64(saved));
           setAnswers(decoded.answers || {});
           setCustomQuestions(decoded.custom || []);
-          
+          // Используем сохраненные вопросы, если они есть
+          // Если вопросов нет (старые сохранения), используем QUESTIONS как fallback
+          if (decoded.questions) {
+            setViewModeQuestions(decoded.questions);
+          } else {
+            setViewModeQuestions(QUESTIONS);
+          }
+
           // Найти первый неотвеченный вопрос
           const firstUnanswered = QUESTIONS.findIndex(q => {
             const ans = decoded.answers[q.id];
@@ -114,7 +141,7 @@ export default function App() {
     // Сохраняем только если не в режиме просмотра И есть параметр в URL
     const params = new URLSearchParams(window.location.search);
     const hasDataParam = params.has('data');
-    
+
     if (!viewMode && isInitialized && !hasDataParam) {
       saveToLocalStorage();
     }
@@ -122,6 +149,7 @@ export default function App() {
 
   const saveToLocalStorage = () => {
     const data = {
+      questions: QUESTIONS,
       answers,
       custom: customQuestions,
     };
@@ -144,13 +172,13 @@ export default function App() {
     if (currentQuestion) {
       const currentAnswers = answers[currentQuestion.id] || [];
       const hasAnyAnswer = currentAnswers.some(a => a && a.trim() !== '' && a !== '-');
-      
+
       // Если нет ответов, записываем "-"
       if (!hasAnyAnswer) {
         setAnswers(prev => ({ ...prev, [currentQuestion.id]: ['-'] }));
       }
     }
-    
+
     if (currentStep < QUESTIONS.length - 1) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
@@ -197,6 +225,7 @@ export default function App() {
 
   const handleShare = () => {
     const data = {
+      questions: QUESTIONS,
       answers,
       custom: customQuestions,
     };
@@ -204,13 +233,13 @@ export default function App() {
     const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
     setShareUrl(url);
     setShowSharePopup(true);
-    
+
     // Устанавливаем фокус на textarea после открытия попапа
     setTimeout(() => {
       textareaRef.current?.focus();
       textareaRef.current?.select();
     }, 100);
-    
+
     // Попытка копировать с fallback
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).catch(() => {
@@ -263,7 +292,7 @@ export default function App() {
         </div>
 
         <div className="container mx-auto px-4 py-12 max-w-4xl relative z-10">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12 pixel-title text-[#ffd700]"
@@ -272,7 +301,7 @@ export default function App() {
           </motion.h1>
 
           <div className="space-y-8">
-            {QUESTIONS.map((question, idx) => {
+            {(viewMode ? viewModeQuestions : QUESTIONS).map((question, idx) => {
               const answer = answers[question.id];
               if (!answer || (Array.isArray(answer) && answer.filter(a => a.trim()).length === 0)) return null;
 
@@ -305,7 +334,7 @@ export default function App() {
                 key={`custom-${idx}`}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: (QUESTIONS.length + idx) * 0.1 }}
+                transition={{ delay: ((viewMode ? viewModeQuestions : QUESTIONS).length + idx) * 0.1 }}
                 className="bg-[#1a1a3e] border-4 border-[#ff69b4] p-6 pixel-border"
               >
                 <h3 className="pixel-question text-[#ff69b4] mb-4">✨ {custom.question}</h3>
