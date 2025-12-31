@@ -752,12 +752,12 @@ body {
 
 .pixel-subtitle {
   letter-spacing: 1px;
-  font-size: clamp(.5rem, 2vw, .75rem);
+  font-size: clamp(.875rem, 2.5vw, 1.125rem);
   line-height: 1.6;
 }
 
 .pixel-answer {
-  letter-spacing: .5px;
+  letter-spacing: 1px;
   font-size: clamp(.875rem, 2.5vw, 1.125rem);
   line-height: 1.8;
 }

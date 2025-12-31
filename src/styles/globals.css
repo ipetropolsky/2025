@@ -34,7 +34,7 @@ body {
 }
 
 .pixel-subtitle {
-  font-size: clamp(0.5rem, 2vw, 0.75rem);
+  font-size: clamp(.875rem, 2.5vw, 1.125rem);
   line-height: 1.6;
   letter-spacing: 1px;
 }
@@ -42,7 +42,7 @@ body {
 .pixel-answer {
   font-size: clamp(0.875rem, 2.5vw, 1.125rem);
   line-height: 1.8;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .pixel-counter {
@@ -80,20 +80,20 @@ body {
   .pixel-title {
     font-size: 1.25rem;
   }
-  
+
   .pixel-question {
     font-size: 0.875rem;
   }
-  
+
   .pixel-answer {
     font-size: 0.75rem;
   }
-  
+
   .pixel-input {
     font-size: 0.875rem;
     padding: 1rem !important;
   }
-  
+
   .pixel-button {
     font-size: 0.5rem;
     padding: 0.75rem 1rem !important;

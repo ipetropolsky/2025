@@ -43,19 +43,26 @@ interface Answers {
   custom?: Array<{ question: string; answer: string[] }>;
 }
 
+interface AppData {
+  userName?: string;
+  questions: Question[];
+  answers: Answers;
+  custom: Array<{ question: string; answer: string[] }>;
+}
+
 const QUESTIONS: Question[] = [
   { id: 1, text: 'Саундтрек года', type: 'multiple', maxAnswers: 3 },
   { id: 2, text: 'ТОП фильмов/сериалов года', type: 'multiple', maxAnswers: 3 },
-  { id: 3, text: 'Еда года', type: 'single' },
-  { id: 4, text: 'Победа года', type: 'single' },
-  { id: 5, text: 'Разочарование года', type: 'single' },
-  { id: 6, text: 'Лучший момент года', type: 'single' },
-  { id: 7, text: 'Занятия года', type: 'multiple', maxAnswers: 3 },
-  { id: 8, text: 'Игра года', type: 'single' },
-  { id: 9, text: 'Поездка года', type: 'single' },
-  { id: 10, text: 'Самая дурацкая покупка года', type: 'single' },
-  { id: 11, text: 'Неожиданное событие года', type: 'single' },
-  { id: 12, text: 'Открытия года', type: 'multiple', maxAnswers: 3 },
+  { id: 3, text: 'Победа года', type: 'single' },
+  { id: 4, text: 'Разочарование года', type: 'single' },
+  { id: 5, text: 'Занятия года', type: 'multiple', maxAnswers: 3 },
+  { id: 6, text: 'Игра/развлечение года', type: 'single' },
+  { id: 7, text: 'Поездка или встреча года', type: 'single' },
+  { id: 8, text: 'Самая дурацкая покупка года', type: 'single' },
+  { id: 9, text: 'Неожиданное событие года', type: 'single' },
+  { id: 10, text: 'Открытие года', type: 'single', maxAnswers: 3 },
+  { id: 11, text: 'Лучшие моменты года', type: 'multiple' },
+  { id: 12, text: 'ТОП желаний в 2026', type: 'single' },
 ];
 
 export default function App() {
@@ -73,6 +80,8 @@ export default function App() {
   const [direction, setDirection] = useState(1);
   const [isInitialized, setIsInitialized] = useState(false);
   const [viewModeQuestions, setViewModeQuestions] = useState<Question[]>(QUESTIONS);
+  const [userName, setUserName] = useState<string>('');
+  const [showWelcome, setShowWelcome] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -83,11 +92,13 @@ export default function App() {
       try {
         // data уже декодирована URLSearchParams.get()
         // decodeBase64 сама обработает URL-encoded символы если нужно
-        const decoded = JSON.parse(decodeBase64(data));
+        const decoded: AppData = JSON.parse(decodeBase64(data));
         setAnswers(decoded.answers || {});
         setCustomQuestions(decoded.custom || []);
+        setUserName(decoded.userName || '');
         setViewMode(true);
         setShowResults(true);
+        setShowWelcome(false);
         setIsInitialized(true);
         // В режиме просмотра используем вопросы из данных, если они есть
         // Если вопросов нет (старые ссылки), используем QUESTIONS как fallback
@@ -106,9 +117,10 @@ export default function App() {
       const saved = localStorage.getItem('yearReview2025');
       if (saved) {
         try {
-          const decoded = JSON.parse(decodeBase64(saved));
+          const decoded: AppData = JSON.parse(decodeBase64(saved));
           setAnswers(decoded.answers || {});
           setCustomQuestions(decoded.custom || []);
+          setUserName(decoded.userName || '');
           // Используем сохраненные вопросы, если они есть
           // Если вопросов нет (старые сохранения), используем QUESTIONS как fallback
           if (decoded.questions) {
@@ -117,17 +129,31 @@ export default function App() {
             setViewModeQuestions(QUESTIONS);
           }
 
-          // Найти первый неотвеченный вопрос
-          const firstUnanswered = QUESTIONS.findIndex(q => {
-            const ans = decoded.answers[q.id];
-            return !ans || ans.length === 0 || (ans.length === 1 && ans[0] === '-');
-          });
-          if (firstUnanswered !== -1) {
-            setCurrentStep(firstUnanswered);
-          } else if (!decoded.custom || decoded.custom.length === 0) {
-            setIsCustomStep(true);
+          // Проверить, есть ли ответы на вопросы
+          const hasAnswers = Object.keys(decoded.answers || {}).length > 0;
+          const hasValidAnswers = Object.values(decoded.answers || {}).some(
+            answer => answer && answer.length > 0 && !(answer.length === 1 && answer[0] === '-')
+          );
+
+          // Если есть имя, но нет ответов - показываем приветственный экран
+          if ((decoded.userName && !hasValidAnswers) || !decoded.userName) {
+            setShowWelcome(true);
           } else {
-            setShowResults(true);
+            // Найти первый неотвеченный вопрос
+            const firstUnanswered = QUESTIONS.findIndex(q => {
+              const ans = decoded.answers?.[q.id];
+              return !ans || ans.length === 0 || (ans.length === 1 && ans[0] === '-');
+            });
+            if (firstUnanswered !== -1) {
+              setCurrentStep(firstUnanswered);
+              setShowWelcome(false);
+            } else if (!decoded.custom || decoded.custom.length === 0) {
+              setIsCustomStep(true);
+              setShowWelcome(false);
+            } else {
+              setShowResults(true);
+              setShowWelcome(false);
+            }
           }
         } catch (e) {
           console.error('Failed to load saved data', e);
@@ -145,10 +171,11 @@ export default function App() {
     if (!viewMode && isInitialized && !hasDataParam) {
       saveToLocalStorage();
     }
-  }, [answers, customQuestions, viewMode, isInitialized]);
+  }, [answers, customQuestions, viewMode, isInitialized, userName]);
 
   const saveToLocalStorage = () => {
-    const data = {
+    const data: AppData = {
+      userName,
       questions: QUESTIONS,
       answers,
       custom: customQuestions,
@@ -224,7 +251,8 @@ export default function App() {
   };
 
   const handleShare = () => {
-    const data = {
+    const data: AppData = {
+      userName,
       questions: QUESTIONS,
       answers,
       custom: customQuestions,
@@ -280,6 +308,103 @@ export default function App() {
     window.location.href = window.location.origin + window.location.pathname;
   };
 
+  const handleNameSubmit = () => {
+    if (userName.trim()) {
+      setShowWelcome(false);
+      saveToLocalStorage();
+    }
+  };
+
+  const handleKeyPressName = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit();
+    }
+  };
+
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-[#0a0a1a] text-white flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Анимированные декоративные элементы */}
+        <motion.div
+          animate={{ y: [0, -20, 0] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute top-10 left-10 text-6xl opacity-30"
+        >
+          👾
+        </motion.div>
+        <motion.div
+          animate={{ y: [0, 20, 0] }}
+          transition={{ duration: 4, repeat: Infinity }}
+          className="absolute top-20 right-20 text-6xl opacity-30"
+        >
+          🎮
+        </motion.div>
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-20 left-20 text-6xl opacity-30"
+        >
+          ⭐
+        </motion.div>
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute bottom-10 right-10 text-6xl opacity-30"
+        >
+          🎄
+        </motion.div>
+
+        <div className="w-full max-w-3xl relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-8"
+          >
+            <div className="text-center mb-8">
+              <h1 className="pixel-title text-[#ffd700]">
+                ИТОГИ ГОДА 2025
+              </h1>
+
+              <p className="pixel-subtitle text-white/80 mt-4">
+                Подведите итоги уходящего года и поделитесь ими с друзьями
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <div className="mb-4">
+                  <label className="pixel-question text-[#ffd700]">
+                    Как вас зовут?
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={e => setUserName(e.target.value)}
+                  className="pixel-input w-full bg-[#1a1a3e] text-white border-4 border-[#4a4aff] p-6 focus:border-[#ffd700] outline-none"
+                  placeholder="Введите ваше имя..."
+                  autoFocus
+                  onKeyPress={handleKeyPressName}
+                />
+              </div>
+
+              <div className="flex justify-center mt-12">
+                <button
+                  onClick={handleNameSubmit}
+                  disabled={!userName.trim()}
+                  className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] disabled:opacity-30 disabled:cursor-not-allowed text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
+                >
+                  Подвести итоги
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   if (showResults) {
     return (
       <div className="min-h-screen bg-[#0a0a1a] text-white relative overflow-hidden">
@@ -295,10 +420,21 @@ export default function App() {
           <motion.h1
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12 pixel-title text-[#ffd700]"
+            className="text-center mb-4 pixel-title text-[#ffd700]"
           >
             ИТОГИ ГОДА 2025
           </motion.h1>
+
+          {userName && (
+            <motion.h2
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-center mb-12 pixel-subtitle text-[#4a4aff] text-2xl"
+            >
+              {userName}
+            </motion.h2>
+          )}
 
           <div className="space-y-8">
             {(viewMode ? viewModeQuestions : QUESTIONS).map((question, idx) => {
