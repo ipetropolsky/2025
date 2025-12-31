@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест логики данных</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Тест логики обработки данных</h1>
+
+    <div class="test">
+        <h2>Тест 1: Декодирование данных</h2>
+        <button onclick="testDecoding()">Запустить тест</button>
+        <div id="test1-result"></div>
+    </div>
+
+    <div class="test">
+        <h2>Тест 2: Проверка ссылки</h2>
+        <p>Ссылка для теста: <a href="http://localhost:3001/?data=eyJxdWVzdGlvbnMiOlt7ImlkIjoxLCJ0ZXh0Ijoi0JXQtNCwINCz0L7QtNCwIiwidHlwZSI6InNpbmdsZSJ9LHsiaWQiOjIsInRleHQiOiLQodCw0YPQvdC00YLRgNC10Log0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfSx7ImlkIjozLCJ0ZXh0Ijoi0KLQntCfINGE0LjQu9GM0LzQvtCyL9GB0LXRgNC40LDQu9C+0LIg0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfV0sImFuc3dlcnMiOnsiMSI6WyJ3ZXJ3ZXIiXSwiMiI6WyJkc2ZzZCIsInNkZiIsInNkZmZmZmYiXSwiMyI6WyJ5eXVpIiwiaXV5dXkiXX0sImN1c3RvbSI6W3sicXVlc3Rpb24iOiIyMzQyMzQiLCJhbnN3ZXIiOlsiMjM0MjM0Il19XX0=" target="_blank">Открыть в новой вкладке</a></p>
+        <button onclick="openTestLink()">Открыть ссылку</button>
+    </div>
+
+    <div class="test">
+        <h2>Тест 3: Логика отображения</h2>
+        <button onclick="testDisplayLogic()">Запустить тест</button>
+        <div id="test3-result"></div>
+    </div>
+
+    <script>
+        // Функции из App.tsx
+        const encodeBase64 = (str) => {
+            const utf8Bytes = new TextEncoder().encode(str);
+            let binaryString = '';
+            utf8Bytes.forEach(byte => {
+                binaryString += String.fromCharCode(byte);
+            });
+            return btoa(binaryString);
+        };
+
+        const decodeBase64 = (str) => {
+            const binaryString = atob(str);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        };
+
+        function testDecoding() {
+            const testData = "eyJxdWVzdGlvbnMiOlt7ImlkIjoxLCJ0ZXh0Ijoi0JXQtNCwINCz0L7QtNCwIiwidHlwZSI6InNpbmdsZSJ9LHsiaWQiOjIsInRleHQiOiLQodCw0YPQvdC00YLRgNC10Log0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfSx7ImlkIjozLCJ0ZXh0Ijoi0KLQntCfINGE0LjQu9GM0LzQvtCyL9GB0LXRgNC40LDQu9C+0LIg0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfV0sImFuc3dlcnMiOnsiMSI6WyJ3ZXJ3ZXIiXSwiMiI6WyJkc2ZzZCIsInNkZiIsInNkZmZmZmYiXSwiMyI6WyJ5eXVpIiwiaXV5dXkiXX0sImN1c3RvbSI6W3sicXVlc3Rpb24iOiIyMzQyMzQiLCJhbnN3ZXIiOlsiMjM0MjM0Il19XX0=";
+
+            try {
+                const decoded = JSON.parse(decodeBase64(testData));
+                const result = document.getElementById('test1-result');
+                result.innerHTML = `
+                    <div class="success">
+                        <h3>✓ Данные успешно декодированы</h3>
+                        <p>Количество вопросов: ${decoded.questions?.length || 0}</p>
+                        <p>Количество ответов: ${Object.keys(decoded.answers || {}).length}</p>
+                        <p>Количество кастомных вопросов: ${decoded.custom?.length || 0}</p>
+                        <pre>${JSON.stringify(decoded, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (e) {
+                const result = document.getElementById('test1-result');
+                result.innerHTML = `<div class="error"><h3>✗ Ошибка декодирования</h3><p>${e.message}</p></div>`;
+            }
+        }
+
+        function openTestLink() {
+            window.open('http://localhost:3001/?data=eyJxdWVzdGlvbnMiOlt7ImlkIjoxLCJ0ZXh0Ijoi0JXQtNCwINCz0L7QtNCwIiwidHlwZSI6InNpbmdsZSJ9LHsiaWQiOjIsInRleHQiOiLQodCw0YPQvdC00YLRgNC10Log0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfSx7ImlkIjozLCJ0ZXh0Ijoi0KLQntCfINGE0LjQu9GM0LzQvtCyL9GB0LXRgNC40LDQu9C+0LIg0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfV0sImFuc3dlcnMiOnsiMSI6WyJ3ZXJ3ZXIiXSwiMiI6WyJkc2ZzZCIsInNkZiIsInNkZmZmZmYiXSwiMyI6WyJ5eXVpIiwiaXV5dXkiXX0sImN1c3RvbSI6W3sicXVlc3Rpb24iOiIyMzQyMzQiLCJhbnN3ZXIiOlsiMjM0MjM0Il19XX0=', '_blank');
+        }
+
+        function testDisplayLogic() {
+            const data = {
+                questions: [
+                    { id: 1, text: 'Еда года', type: 'single' },
+                    { id: 2, text: 'Саундтрек года', type: 'multiple', maxAnswers: 3 },
+                    { id: 3, text: 'ТОП фильмов/сериалов года', type: 'multiple', maxAnswers: 3 }
+                ],
+                answers: {
+                    1: ["werwer"],
+                    2: ["dsfsd", "sdf", "sdfffff"],
+                    3: ["yyui", "iuyuy"]
+                },
+                custom: [
+                    { question: "234234", answer: ["234234"] }
+                ]
+            };
+
+            let html = '<div class="success"><h3>✓ Логика отображения</h3>';
+
+            // Логика из App.tsx
+            const answers = data.answers;
+            const questionsToShow = data.questions;
+
+            html += '<h4>Вопросы для отображения:</h4>';
+            questionsToShow.forEach((question, idx) => {
+                const answer = answers[question.id];
+                if (!answer || (Array.isArray(answer) && answer.filter(a => a.trim()).length === 0)) {
+                    html += `<p>Вопрос ${question.id} "${question.text}" - <span class="error">НЕ показывается</span> (нет ответа)</p>`;
+                } else {
+                    html += `<p>Вопрос ${question.id} "${question.text}" - <span class="success">показывается</span></p>`;
+                    html += `<p style="margin-left: 20px;">Ответы: ${answer.filter(a => a.trim()).join(', ')}</p>`;
+                }
+            });
+
+            html += '<h4>Кастомные вопросы:</h4>';
+            data.custom.forEach((custom, idx) => {
+                html += `<p>${custom.question}: ${custom.answer[0]}</p>`;
+            });
+
+            html += '</div>';
+            document.getElementById('test3-result').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

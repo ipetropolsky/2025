@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test atob</title>
+</head>
+<body>
+    <h1>Test atob with real data</h1>
+    <div id="result"></div>
+
+    <script>
+        const realData = "eyJxdWVzdGlvbnMiOlt7ImlkIjoxLCJ0ZXh0Ijoi0JXQtNCwINCz0L7QtNCwIiwidHlwZSI6InNpbmdsZSJ9LHsiaWQiOjIsInRleHQiOiLQodCw0YPQvdC00YLRgNC10Log0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfSx7ImlkIjozLCJ0ZXh0Ijoi0KLQntCfINGE0LjQu9GM0LzQvtCyL9GB0LXRgNC40LDQu9C+0LIg0LPQvtC00LAiLCJ0eXBlIjoibXVsdGlwbGUiLCJtYXhBbnN3ZXJzIjozfV0sImFuc3dlcnMiOnsiMSI6WyJ3ZXJ3ZXIiXSwiMiI6WyJkc2ZzZCIsInNkZiIsInNkZmZmZmYiXSwiMyI6WyJ5eXVpIiwiaXV5dXkiXX0sImN1c3RvbSI6W3sicXVlc3Rpb24iOiIyMzQyMzQiLCJhbnN3ZXIiOlsiMjM0MjM0Il19XX0=";
+
+        function decodeBase64(str) {
+            const binaryString = atob(str);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        }
+
+        try {
+            const decoded = decodeBase64(realData);
+            const parsed = JSON.parse(decoded);
+            document.getElementById('result').innerHTML = `
+                <h2 style="color: green;">✓ Success!</h2>
+                <p>Questions: ${parsed.questions.length}</p>
+                <p>Answers: ${Object.keys(parsed.answers).length}</p>
+                <pre>${JSON.stringify(parsed, null, 2)}</pre>
+            `;
+        } catch (e) {
+            document.getElementById('result').innerHTML = `
+                <h2 style="color: red;">✗ Error: ${e.message}</h2>
+                <p>Data length: ${realData.length}</p>
+                <p>Last 10 chars: ${realData.slice(-10)}</p>
+                <pre>${realData}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>
