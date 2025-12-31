@@ -1,18 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Share2, Sparkles } from 'lucide-react';
 
 // Функции для правильной работы с Unicode в base64
 const encodeBase64 = (str: string): string => {
-  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-    return String.fromCharCode(parseInt(p1, 16));
-  }));
+  // Преобразуем строку в UTF-8 байты, затем в base64
+  const utf8Bytes = new TextEncoder().encode(str);
+  let binaryString = '';
+  utf8Bytes.forEach(byte => {
+    binaryString += String.fromCharCode(byte);
+  });
+  return btoa(binaryString);
 };
 
 const decodeBase64 = (str: string): string => {
-  return decodeURIComponent(Array.prototype.map.call(atob(str), (c: string) => {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  // Декодируем base64 в байты, затем в UTF-8 строку
+  const binaryString = atob(str);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
 };
 
 interface Question {
@@ -55,6 +63,7 @@ export default function App() {
   const [shareUrl, setShareUrl] = useState('');
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [direction, setDirection] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -67,8 +76,10 @@ export default function App() {
         setCustomQuestions(decoded.custom || []);
         setViewMode(true);
         setShowResults(true);
+        setIsInitialized(true);
       } catch (e) {
-        console.error('Failed to decode data');
+        console.error('Failed to decode data', e);
+        setIsInitialized(true);
       }
     } else {
       const saved = localStorage.getItem('yearReview2025');
@@ -79,7 +90,10 @@ export default function App() {
           setCustomQuestions(decoded.custom || []);
           
           // Найти первый неотвеченный вопрос
-          const firstUnanswered = QUESTIONS.findIndex(q => !decoded.answers[q.id] || decoded.answers[q.id].length === 0);
+          const firstUnanswered = QUESTIONS.findIndex(q => {
+            const ans = decoded.answers[q.id];
+            return !ans || ans.length === 0 || (ans.length === 1 && ans[0] === '-');
+          });
           if (firstUnanswered !== -1) {
             setCurrentStep(firstUnanswered);
           } else if (!decoded.custom || decoded.custom.length === 0) {
@@ -88,17 +102,18 @@ export default function App() {
             setShowResults(true);
           }
         } catch (e) {
-          console.error('Failed to load saved data');
+          console.error('Failed to load saved data', e);
         }
       }
+      setIsInitialized(true);
     }
   }, []);
 
   useEffect(() => {
-    if (!viewMode) {
+    if (!viewMode && isInitialized) {
       saveToLocalStorage();
     }
-  }, [answers, customQuestions, viewMode]);
+  }, [answers, customQuestions, viewMode, isInitialized]);
 
   const saveToLocalStorage = () => {
     const data = {
@@ -119,6 +134,18 @@ export default function App() {
   };
 
   const handleNext = () => {
+    // Проверяем, есть ли хоть один непустой ответ
+    const currentQuestion = !isCustomStep ? QUESTIONS[currentStep] : null;
+    if (currentQuestion) {
+      const currentAnswers = answers[currentQuestion.id] || [];
+      const hasAnyAnswer = currentAnswers.some(a => a && a.trim() !== '' && a !== '-');
+      
+      // Если нет ответов, записываем "-"
+      if (!hasAnyAnswer) {
+        setAnswers(prev => ({ ...prev, [currentQuestion.id]: ['-'] }));
+      }
+    }
+    
     if (currentStep < QUESTIONS.length - 1) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
@@ -128,6 +155,20 @@ export default function App() {
     } else {
       setShowResults(true);
     }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, questionId: number) => {
+    if (e.key === 'Enter') {
+      handleNext();
+    }
+  };
+
+  // Проверяем, есть ли хоть один непустой ответ для текущего вопроса
+  const hasCurrentAnswer = () => {
+    if (isCustomStep) return true;
+    const currentQuestion = QUESTIONS[currentStep];
+    const currentAnswers = answers[currentQuestion.id] || [];
+    return currentAnswers.some(a => a && a.trim() !== '' && a !== '-');
   };
 
   const handlePrev = () => {
@@ -375,6 +416,7 @@ export default function App() {
                     className="pixel-input w-full bg-[#1a1a3e] text-white border-4 border-[#4a4aff] p-6 focus:border-[#ffd700] outline-none"
                     placeholder="Ваш ответ..."
                     autoFocus
+                    onKeyPress={e => handleKeyPress(e, currentQuestion.id)}
                   />
                 ) : (
                   <div className="space-y-3">
@@ -406,7 +448,7 @@ export default function App() {
                   onClick={handleNext}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  {currentStep === QUESTIONS.length - 1 ? 'Далее' : 'Следующий'} <ChevronRight className="inline" />
+                  {hasCurrentAnswer() ? (currentStep === QUESTIONS.length - 1 ? 'Далее >' : 'Дальше >') : 'Пропустить'}
                 </button>
               </div>
             </motion.div>
