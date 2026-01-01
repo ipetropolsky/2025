@@ -52,7 +52,7 @@ interface AppData {
 
 const QUESTIONS: Question[] = [
   { id: 1, text: 'Саундтрек года', type: 'multiple', maxAnswers: 3 },
-  { id: 2, text: 'ТОП фильмов/сериалов года', type: 'multiple', maxAnswers: 3 },
+  { id: 2, text: 'Топ фильмов/сериалов года', type: 'multiple', maxAnswers: 3 },
   { id: 3, text: 'Победа года', type: 'single' },
   { id: 4, text: 'Разочарование года', type: 'single' },
   { id: 5, text: 'Занятия года', type: 'multiple', maxAnswers: 3 },
@@ -61,8 +61,8 @@ const QUESTIONS: Question[] = [
   { id: 8, text: 'Самая дурацкая покупка года', type: 'single' },
   { id: 9, text: 'Неожиданное событие года', type: 'single' },
   { id: 10, text: 'Открытие года', type: 'single', maxAnswers: 3 },
-  { id: 11, text: 'Лучшие моменты года', type: 'multiple' },
-  { id: 12, text: 'ТОП желаний в 2026', type: 'single' },
+  { id: 11, text: 'Что не успелось в 2025-м', type: 'single' },
+  { id: 12, text: 'Топ желаний в 2026', type: 'multiple' },
 ];
 
 export default function App() {
@@ -439,7 +439,7 @@ export default function App() {
           <div className="space-y-8">
             {(viewMode ? viewModeQuestions : QUESTIONS).map((question, idx) => {
               const answer = answers[question.id];
-              if (!answer || (Array.isArray(answer) && answer.filter(a => a.trim()).length === 0)) return null;
+              if (!answer || (Array.isArray(answer) && answer.filter(a => a && a.trim()).length === 0)) return null;
 
               return (
                 <motion.div
@@ -454,7 +454,7 @@ export default function App() {
                     <p className="pixel-answer text-white">{answer[0]}</p>
                   ) : (
                     <ol className="space-y-2">
-                      {answer.filter(a => a.trim()).map((ans, i) => (
+                      {answer.filter(a => a && a.trim()).map((ans, i) => (
                         <li key={i} className="pixel-answer text-white">
                           {i + 1}. {ans}
                         </li>
