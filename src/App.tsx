@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Share2, Sparkles } from 'lucide-react';
+import { Share2, Sparkles } from 'lucide-react';
 
 // Функции для правильной работы с Unicode в base64
 const encodeBase64 = (str: string): string => {
@@ -367,7 +367,7 @@ export default function App() {
               </h1>
 
               <p className="pixel-subtitle text-white/80 mt-4">
-                Подведите итоги уходящего года и поделитесь ими с друзьями
+                Подведите итоги года и поделитесь ими с друзьями
               </p>
             </div>
 
@@ -395,7 +395,7 @@ export default function App() {
                   disabled={!userName.trim()}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] disabled:opacity-30 disabled:cursor-not-allowed text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  Подвести итоги
+                  Подвести итоги {'>'}
                 </button>
               </div>
             </div>
@@ -493,7 +493,7 @@ export default function App() {
                 onClick={handleShare}
                 className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-8 py-4 border-4 border-white transition-all hover:scale-105"
               >
-                <Share2 className="inline mr-2" />
+                <Share2 className="inline mr-2" style={{ marginTop: -5 }} />{' '}
                 Поделиться
               </button>
             )}
@@ -621,14 +621,14 @@ export default function App() {
                   disabled={currentStep === 0}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] disabled:opacity-30 disabled:cursor-not-allowed text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  <ChevronLeft className="inline" /> Назад
+                  {'<'} Назад
                 </button>
 
                 <button
                   onClick={handleNext}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  {hasCurrentAnswer() ? (currentStep === QUESTIONS.length - 1 ? 'Далее >' : 'Дальше >') : 'Пропустить'}
+                  {hasCurrentAnswer() ? (currentStep === QUESTIONS.length - 1 ? 'Далее >' : 'Дальше >') : 'Пропустить >'}
                 </button>
               </div>
             </motion.div>
@@ -696,14 +696,14 @@ export default function App() {
                   onClick={handlePrev}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  <ChevronLeft className="inline" /> Назад
+                  {'<'} Назад
                 </button>
 
                 <button
                   onClick={() => setShowResults(true)}
                   className="pixel-button bg-[#4a4aff] hover:bg-[#6a6aff] text-white px-6 py-4 border-4 border-white transition-all hover:scale-105"
                 >
-                  Показать результаты <Sparkles className="inline" />
+                  Показать результаты <Sparkles className="inline" style={{marginTop: -5}} />
                 </button>
               </div>
             </motion.div>
